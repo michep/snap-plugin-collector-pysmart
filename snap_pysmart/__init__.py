@@ -40,7 +40,7 @@ class Smartmon(snap.Collector):
             self.devices = []
             for device in DeviceList().devices:
                 if not device.supports_smart:
-                    LOG.warning("Skipping %s.  SMART is not enabled.", device.path)
+                    LOG.warning("Skipping %s >> %s.  SMART is not enabled.", device.interface, device.path)
                 else:
                     self.devices.append(device)
             if len(self.devices) == 0:
@@ -51,7 +51,7 @@ class Smartmon(snap.Collector):
         metrics = []
         # adds namespace elements (static and dynamic) via namespace methods
         for i in ("threshold", "value", "whenfailed", "worst", "type",
-                  "updated", "raw", "num"):
+                  "updated", "raw"):
             metric = snap.Metric(version=1,
                                  Description="SMARTMON list of dynamic devices"
                                  " and attributes")
@@ -59,7 +59,9 @@ class Smartmon(snap.Collector):
             metric.namespace.add_static_element("smartmon")
             metric.namespace.add_static_element("devices")
             # dynamic elements which are captured from the smartmontool
+            metric.namespace.add_dynamic_element("interface", "device interface")
             metric.namespace.add_dynamic_element("device", "device name")
+            metric.namespace.add_dynamic_element("num", "attribute number")
             metric.namespace.add_dynamic_element("attribute", "attribute name")
             # values of the attributes to collect
             metric.namespace.add_static_element(i)
@@ -78,6 +80,7 @@ class Smartmon(snap.Collector):
         # loop through each device and each attribute on the device and store
         # the value to metric
         for dev in self.devices:
+            dev.update()
             # dev.attributes is the list of S.M.A.R.T. attributes avaible on
             # each device, may change depending on the devide
             for att in dev.attributes:
@@ -90,28 +93,33 @@ class Smartmon(snap.Collector):
                             namespace=[i for i in metric.namespace],
                             unit=metric.unit)
                         _metrics.tags = [(k, v) for k, v in metric.tags.items()]
+                        # set the dynamic device interface
+                        _metrics.namespace[3].value = dev.interface
                         # set the dynamic device name
-                        _metrics.namespace[3].value = dev.name
+                        _metrics.namespace[4].value = dev.name
+                        # set the dynamic attribute number
+                        _metrics.namespace[5].value = att.num
                         # set the dynamic attribute name
-                        _metrics.namespace[4].value = att.name
+                        _metrics.namespace[6].value = att.name
                         # store the value into the metric data
-                        if _metrics.namespace[5].value == "threshold":
+                        if _metrics.namespace[7].value == "threshold":
                             _metrics.data = att.thresh
-                        if _metrics.namespace[5].value == "value":
+                        if _metrics.namespace[7].value == "value":
                             _metrics.data = att.value
-                        if _metrics.namespace[5].value == "whenfailed":
+                        if _metrics.namespace[7].value == "whenfailed":
                             _metrics.data = att.when_failed
-                        if _metrics.namespace[5].value == "worst":
+                        if _metrics.namespace[7].value == "worst":
                             _metrics.data = att.worst
-                        if _metrics.namespace[5].value == "type":
+                        if _metrics.namespace[7].value == "type":
                             _metrics.data = att.type
-                        if _metrics.namespace[5].value == "updated":
+                        if _metrics.namespace[7].value == "updated":
                             _metrics.data = att.updated
-                        if _metrics.namespace[5].value == "raw":
+                        if _metrics.namespace[7].value == "raw":
                             _metrics.data = att.raw
-                        if _metrics.namespace[5].value == "num":
-                            _metrics.data = att.num
+                        # if _metrics.namespace[7].value == "num":
+                        #     _metrics.data = att.num
                         # store the time stamp for each metric
                         _metrics.timestamp = ts_now
+                        _metrics.tags["serialnum"] = dev.serial
                         metricsToReturn.append(_metrics)
         return metricsToReturn
