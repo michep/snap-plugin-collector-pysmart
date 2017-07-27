@@ -55,16 +55,16 @@ class Smartmon(snap.Collector):
             metric = snap.Metric(version=1,
                                  Description="SMARTMON list of dynamic devices"
                                  " and attributes")
-            metric.namespace.add_static_element("intel")
-            metric.namespace.add_static_element("smartmon")
-            metric.namespace.add_static_element("devices")
+            metric.namespace.add_static_element("intel")                              # /0
+            metric.namespace.add_static_element("smartmon")                           # /1
+            metric.namespace.add_static_element("devices")                            # /2
             # dynamic elements which are captured from the smartmontool
-            metric.namespace.add_dynamic_element("interface", "device interface")
-            metric.namespace.add_dynamic_element("device", "device name")
-            metric.namespace.add_dynamic_element("num", "attribute number")
-            metric.namespace.add_dynamic_element("attribute", "attribute name")
+            metric.namespace.add_dynamic_element("interface", "device interface")     # /3
+            metric.namespace.add_dynamic_element("device", "device name")             # /4
+            metric.namespace.add_dynamic_element("num", "attribute number")           # /5
+            metric.namespace.add_dynamic_element("attribute", "attribute name")       # /6
             # values of the attributes to collect
-            metric.namespace.add_static_element(i)
+            metric.namespace.add_static_element(i)                                    # /7
             metrics.append(metric)
         return metrics
 
