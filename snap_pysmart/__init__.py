@@ -57,14 +57,13 @@ class Smartmon(snap.Collector):
                                  " and attributes")
             metric.namespace.add_static_element("intel")                              # /0
             metric.namespace.add_static_element("smartmon")                           # /1
-            metric.namespace.add_static_element("devices")                            # /2
             # dynamic elements which are captured from the smartmontool
-            metric.namespace.add_dynamic_element("interface", "device interface")     # /3
-            metric.namespace.add_dynamic_element("device", "device name")             # /4
-            metric.namespace.add_dynamic_element("num", "attribute number")           # /5
-            metric.namespace.add_dynamic_element("attribute", "attribute name")       # /6
+            metric.namespace.add_dynamic_element("interface", "device interface")     # /2
+            metric.namespace.add_dynamic_element("device", "device name")             # /3
+            metric.namespace.add_dynamic_element("num", "attribute number")           # /4
+            metric.namespace.add_dynamic_element("attribute", "attribute name")       # /5
             # values of the attributes to collect
-            metric.namespace.add_static_element(i)                                    # /7
+            metric.namespace.add_static_element(i)                                    # /6
             metrics.append(metric)
         return metrics
 
@@ -94,27 +93,27 @@ class Smartmon(snap.Collector):
                             unit=metric.unit)
                         _metrics.tags = [(k, v) for k, v in metric.tags.items()]
                         # set the dynamic device interface
-                        _metrics.namespace[3].value = dev.interface
+                        _metrics.namespace[2].value = dev.interface
                         # set the dynamic device name
-                        _metrics.namespace[4].value = dev.name
+                        _metrics.namespace[3].value = dev.name
                         # set the dynamic attribute number
-                        _metrics.namespace[5].value = att.num
+                        _metrics.namespace[4].value = att.num
                         # set the dynamic attribute name
-                        _metrics.namespace[6].value = att.name
+                        _metrics.namespace[5].value = att.name
                         # store the value into the metric data
-                        if _metrics.namespace[7].value == "threshold":
+                        if _metrics.namespace[6].value == "threshold":
                             _metrics.data = att.thresh
-                        if _metrics.namespace[7].value == "value":
+                        if _metrics.namespace[6].value == "value":
                             _metrics.data = att.value
-                        if _metrics.namespace[7].value == "whenfailed":
+                        if _metrics.namespace[6].value == "whenfailed":
                             _metrics.data = att.when_failed
-                        if _metrics.namespace[7].value == "worst":
+                        if _metrics.namespace[6].value == "worst":
                             _metrics.data = att.worst
-                        if _metrics.namespace[7].value == "type":
+                        if _metrics.namespace[6].value == "type":
                             _metrics.data = att.type
-                        if _metrics.namespace[7].value == "updated":
+                        if _metrics.namespace[6].value == "updated":
                             _metrics.data = att.updated
-                        if _metrics.namespace[7].value == "raw":
+                        if _metrics.namespace[6].value == "raw":
                             _metrics.data = att.raw
                         # if _metrics.namespace[7].value == "num":
                         #     _metrics.data = att.num
