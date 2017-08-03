@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "schedule": {
+        "type": "simple",
+        "interval": "10s"
+    },
+    "workflow": {
+        "collect": {
+            "metrics": {
+      			"/intel/smartmon/*/*/*/NAND_Writes_32MiB/raw": {},
+      			"/intel/smartmon/*/*/health": {}
+      		},
+      		"config": {
+      			"/intel/smartmon": {
+      				"sudo": "true",
+      				"smartctl_path": "/usr/sbin/smartctl"
+      			}
+      		}
+        }
+    }
+}
