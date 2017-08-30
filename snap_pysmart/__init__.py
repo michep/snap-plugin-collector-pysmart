@@ -69,19 +69,29 @@ class Smartmon(snap.Collector):
         return metrics
 
     def get_config_policy(self):
-        return snap.ConfigPolicy()
+        return snap.ConfigPolicy([
+            ("intel", "smartmon"),
+            [
+                (
+                    "smartctl_path",
+                    snap.StringRule(required=True, default="smartctl")
+                ),
+                (
+                    "sudo",
+                    snap.BoolRule(required=True)
+                )
+            ]
+        ])
 
     def collect(self, metrics):
 
-        if self.init:
-            smartctl_path = metrics[0].config['smartctl_path'] if 'smartctl_path' in metrics[0].config else ''
-            sudo = bool(metrics[0].config['sudo']) if 'sudo' in metrics[0].config else False
-            for device in DeviceList(smartctl_path = smartctl_path, sudo = sudo).devices:
-                if not device.supports_smart:
-                    LOG.warning("Skipping %s >> %s.  SMART is not enabled.", device.interface, device.path)
-                else:
-                    self.devices.append(device)
-            self.init = False
+        smartctl_path = metrics[0].config['smartctl_path']
+        sudo = bool(metrics[0].config['sudo'])
+        for device in DeviceList(smartctl_path = smartctl_path, sudo = sudo).devices:
+            if not device.supports_smart:
+                LOG.warning("Skipping %s >> %s.  SMART is not enabled.", device.interface, device.path)
+            else:
+                self.devices.append(device)
 
         metrics_found = []
         metrics_return = []

@@ -18,8 +18,6 @@
 pkg:
 	$(MAKE) clean
 	bash -c "./scripts/create_pkg.sh"
-test:
-	pytest --cov=SmartmonCollectorPlugin
 clean:
 	rm -rf dist .venv-reloactable *.egg-info build .acbuild
 	find . -name '*.pyc' -exec rm --force {} \;
