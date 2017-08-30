@@ -85,8 +85,10 @@ class Smartmon(snap.Collector):
 
     def collect(self, metrics):
 
+        self.devices = []
         smartctl_path = metrics[0].config['smartctl_path']
         sudo = bool(metrics[0].config['sudo'])
+
         for device in DeviceList(smartctl_path = smartctl_path, sudo = sudo).devices:
             if not device.supports_smart:
                 LOG.warning("Skipping %s >> %s.  SMART is not enabled.", device.interface, device.path)
@@ -101,7 +103,6 @@ class Smartmon(snap.Collector):
         # loop through each device and each attribute on the device and store
         # the value to metric
         for dev in self.devices:
-            dev.update()
             # dev.attributes is the list of S.M.A.R.T. attributes avaible on
             # each device, may change depending on the devide
             for metric in metrics:
