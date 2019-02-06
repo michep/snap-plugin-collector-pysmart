@@ -102,59 +102,65 @@ class Smartmon(snap.Collector):
         ts_now = time.time()
         # loop through each device and each attribute on the device and store
         # the value to metric
+
+        metricsMetadata = self.update_catalog(None)
+
+        healthMetric = next(metric for metric in metricsMetadata if metric.namespace[4].value == 'health')
+
         for dev in self.devices:
             # dev.attributes is the list of S.M.A.R.T. attributes avaible on
             # each device, may change depending on the devide
-            for metric in metrics:
-                if metric.namespace[4].value == 'health':
-                    _metrics = snap.Metric(
-                        namespace=[i for i in metric.namespace],
-                        unit=metric.unit)
-                    _metrics.tags = [(k, v) for k, v in metric.tags.items()]
-                    # set the dynamic device interface
-                    _metrics.namespace[2].value = dev.interface
-                    # set the dynamic device name
-                    _metrics.namespace[3].value = dev.name
-                    _metrics.data = 0 if dev.assessment == 'PASS' else 1
-                    _metrics.timestamp = ts_now
-                    _metrics.tags["serialnum"] = dev.serial
-                    metrics_found.append(_metrics)
-                else:
-                    for att in dev.attributes:
-                        if att is not None:
-                            # sets the metricTeReturn to the metrics class which
-                            # inherits the namespace, unit, and tags from the
-                            # metric in metrics
-                            _metrics = snap.Metric(
-                                namespace=[i for i in metric.namespace],
-                                unit=metric.unit)
-                            _metrics.tags = [(k, v) for k, v in metric.tags.items()]
-                            # set the dynamic device interface
-                            _metrics.namespace[2].value = dev.interface
-                            # set the dynamic device name
-                            _metrics.namespace[3].value = dev.name
-                            # set the dynamic attribute number
-                            _metrics.namespace[4].value = att.num
-                            # set the dynamic attribute name
-                            _metrics.namespace[5].value = att.name
-                            # store the value into the metric data
-                            if _metrics.namespace[6].value == "threshold":
-                                _metrics.data = att.thresh
-                            if _metrics.namespace[6].value == "value":
-                                _metrics.data = att.value
-                            if _metrics.namespace[6].value == "whenfailed":
-                                _metrics.data = att.when_failed
-                            if _metrics.namespace[6].value == "worst":
-                                _metrics.data = att.worst
-                            if _metrics.namespace[6].value == "type":
-                                _metrics.data = att.type
-                            if _metrics.namespace[6].value == "updated":
-                                _metrics.data = att.updated
-                            if _metrics.namespace[6].value == "raw":
-                                _metrics.data = att.raw
-                            _metrics.timestamp = ts_now
-                            _metrics.tags["serialnum"] = dev.serial
-                            metrics_found.append(_metrics)
+            _metrics = snap.Metric(
+                namespace=[i for i in healthMetric.namespace])
+                #,unit=metric.unit)
+            #_metrics.tags = [(k, v) for k, v in metric.tags.items()]
+            # set the dynamic device interface
+            _metrics.namespace[2].value = dev.interface
+            # set the dynamic device name
+            _metrics.namespace[3].value = dev.name
+            _metrics.data = 0 if dev.assessment == 'PASS' else 1
+            _metrics.timestamp = ts_now
+            _metrics.tags["serialnum"] = dev.serial
+            metrics_found.append(_metrics)
+            for att in dev.attributes:
+                if att is not None:
+                    # sets the metricTeReturn to the metrics class which
+                    # inherits the namespace, unit, and tags from the
+                    # metric in metrics
+                    for metType in ("threshold", "value", "whenfailed", "worst", "type",
+                              "updated", "raw"):
+                        longMetric = next(metric for metric in metricsMetadata if len(metric.namespace > 6) and metric.namespace[6].value == metType)
+                        _metrics = snap.Metric(
+                            namespace=[i for i in longMetric.namespace])
+                            #,unit=metric.unit)
+                        #_metrics.tags = [(k, v) for k, v in metric.tags.items()]
+                        # set the dynamic device interface
+                        _metrics.namespace[2].value = dev.interface
+                        # set the dynamic device name
+                        _metrics.namespace[3].value = dev.name
+                        # set the dynamic attribute number
+                        _metrics.namespace[4].value = att.num
+                        # set the dynamic attribute name
+                        _metrics.namespace[5].value = att.name
+                        # store the value into the metric data
+                        if _metrics.namespace[6].value == "threshold":
+                            _metrics.data = att.thresh
+                        if _metrics.namespace[6].value == "value":
+                            _metrics.data = att.value
+                        if _metrics.namespace[6].value == "whenfailed":
+                            _metrics.data = att.when_failed
+                        if _metrics.namespace[6].value == "worst":
+                            _metrics.data = att.worst
+                        if _metrics.namespace[6].value == "type":
+                            _metrics.data = att.type
+                        if _metrics.namespace[6].value == "updated":
+                            _metrics.data = att.updated
+                        if _metrics.namespace[6].value == "raw":
+                            _metrics.data = att.raw
+                        _metrics.timestamp = ts_now
+                        _metrics.tags["serialnum"] = dev.serial
+                        metrics_found.append(_metrics)
+
         for mt in metrics:
             matching = self.lookup_metric_by_namespace(mt, metrics_found)
             if len(matching):
@@ -180,5 +186,10 @@ class Smartmon(snap.Collector):
             ns = self.namespace2str(met.namespace)
             match = nsre.search(ns)
             if match:
+                resultTags = lookupmetric.tags.copy()
+                metTags = met.tags.copy()
+                resultTags.update(metTags)
+                met.unit = lookupmetric.unit
+                met.tags = resultTags
                 ret.append(met)
         return ret
